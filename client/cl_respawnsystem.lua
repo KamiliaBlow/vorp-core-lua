@@ -79,7 +79,6 @@ local ProcessNewPosition = function()
 end
 
 local EndDeathCam = function()
-    NetworkSetInSpectatorMode(false, PlayerPedId())
     ClearFocus()
     RenderScriptCams(false, false, 0, true, false)
     DestroyCam(cam, false)
@@ -88,93 +87,57 @@ local EndDeathCam = function()
 end
 
 local keepdown
-local ResurrectPlayer = function(currentHospital, currentHospitalName, justrevive)
+local ResurrectPlayer = function()
     local player = PlayerPedId()
+	
+	ResurrectPed(player)
+	local innerHealth = Citizen.InvokeNative(0x36731AC041289BB1, player, 0)
+    SetEntityHealth(player, Config.HealthOnResurrection + innerHealth)
+	
+	SetPedToRagdoll(player,1000, 1000, 0, 0, 0, 0)
+	ResetPedRagdollTimer(player)
+	DisablePedPainAudio(player, true)
+	
     Citizen.InvokeNative(0xCE7A90B160F75046, false)
     if Config.HideUi then -- SHOW VORP core ui
         TriggerEvent("vorp:showUi", false)
     else
         TriggerEvent("vorp:showUi", true)
     end
-    ResurrectPed(player)
-    Wait(200)
+
     EndDeathCam()
     TriggerServerEvent("vorp:ImDead", false)
     setDead = false
+	Wait(100)
+	NetworkSetInSpectatorMode(false, player)
     DisplayHud(true)
     DisplayRadar(true)
     setPVP()
     TriggerEvent("vorpcharacter:reloadafterdeath")
-    Wait(500)
-    if currentHospital and currentHospital then -- set entitycoords with heading
-        Citizen.InvokeNative(0x203BEFFDBE12E96A, player, currentHospital, false, false, false)
-    end
-    Wait(2000)
-    HealPlayer() -- heal fully the player
-    if Config.RagdollOnResurrection and not justrevive then
-        keepdown = true
-        CreateThread(function() -- tread to keep player down
-            while keepdown do
-                Wait(0)
-                SetPedToRagdoll(PlayerPedId(), 4000, 4000, 0, 0, 0, 0)
-                ResetPedRagdollTimer(PlayerPedId())
-                DisablePedPainAudio(PlayerPedId(), true)
-            end
-        end)
-        AnimpostfxPlay("Title_Gen_FewHoursLater")
-        Wait(3000)
-        DoScreenFadeIn(2000)
-        AnimpostfxPlay("PlayerWakeUpInterrogation") -- disabled
-        Wait(19000)
-        keepdown = false
-        local dict = "minigames_hud"
-        local icon = "five_finger_burnout"
-        TriggerEvent('vorp:NotifyLeft', currentHospitalName or T.message6, T.message5,
-            dict, icon
-            , 8000, "COLOR_PURE_WHITE") -- mesage only if this is active and justrevive is false
-    else
-        DoScreenFadeIn(2000)            -- fadein
-    end
 end
 
 ResspawnPlayer = function()
     local player = PlayerPedId()
-    TriggerServerEvent("vorp:PlayerForceRespawn")
-    TriggerEvent("vorp:PlayerForceRespawn")
-    local closestDistance = math.huge
-    local closestLocation = ""
-    local coords = ""
-    local pedCoords = GetEntityCoords(player)
-    for _, location in pairs(Config.Hospitals) do
-        local locationCoords = vector3(location.pos.x, location.pos.y, location.pos.z)
-        local currentDistance = #(pedCoords - locationCoords)
 
-        if currentDistance < closestDistance then
-            closestDistance = currentDistance
-            closestLocation = location.name
-            coords = location.pos
-        end
-    end
-    ResurrectPlayer(coords, closestLocation, false)
+    ResurrectPed(player)
+    local innerHealth = Citizen.InvokeNative(0x36731AC041289BB1, player, 0)
+    SetEntityHealth(player, Config.HealthOnRespawn + innerHealth)
+	SetPedToRagdoll(player, 1000, 1000, 0, 0, 0, 0)
+	ResetPedRagdollTimer(player)
+	DisablePedPainAudio(player, true)
+	
+	EndDeathCam()
+	
+    Citizen.Wait(100)
     TriggerServerEvent("vorpcharacter:getPlayerSkin")
+    TriggerServerEvent("vorp:ImDead", false)
+    setDead = false
+    NetworkSetInSpectatorMode(false, player)
+    DisplayHud(true)
+    DisplayRadar(true)
+    setPVP()
 end
 
---[[local StartDeathCam = function()
-    ClearFocus()
-    local playerPed = PlayerPedId()
-    cam = CreateCamWithParams("DEFAULT_SCRIPTED_CAMERA", GetEntityCoords(playerPed), 0, 0, 0, GetGameplayCamFov())
-    SetCamActive(cam, true)
-    RenderScriptCams(true, true, 1000, true, false)
-
-end
-
-local ProcessCamControls = function()
-    local playerPed = PlayerPedId()
-    local playerCoords = ProcessNewPosition()
-    local newPos = playerCoords
-    SetCamCoord(cam, newPos.x, newPos.y, newPos.z)
-    PointCamAtCoord(cam, playerCoords.x, playerCoords.y, playerCoords.z + 0.5)
-end]]
 local StartDeathCam = function()
     ClearFocus()
     local playerPed = PlayerPedId()
@@ -194,11 +157,11 @@ local ProcessCamControls = function()
     local newPos = playerCoords
     if IsEntityAttachedToAnyPed(PlayerPedId()) then
         SetCamCoord(cam, newPos.x, newPos.y + -2, newPos.z + 0.50)
-        SetCamRot(cam, -20.0, 0.0, 0.0, 1)
+        SetCamRot(cam, playerCoords.x, playerCoords.y, playerCoords.z)
         SetCamFov(cam, 50.0)
     else
         SetCamCoord(cam, newPos.x, newPos.y, newPos.z + 1.0)
-        SetCamRot(cam, -80.0, 0.0, 0.0, 1)
+        SetCamRot(cam, playerCoords.x, playerCoords.y, playerCoords.z)
         SetCamFov(cam, 50.0)
     end
 end
@@ -289,8 +252,6 @@ CreateThread(function()
                     PromptSetActiveGroupThisFrame(prompts, CheckLable())
 
                     if PromptHasHoldModeCompleted(prompt) then
-                        DoScreenFadeOut(3000)
-                        Wait(3000)
                         ResspawnPlayer()
                         PressKey = true
                         carried  = false
@@ -299,10 +260,12 @@ CreateThread(function()
                     end
 
                     if TimeToRespawn >= 1 and setDead then -- message will only show if timer has not been met
+						NetworkSetInSpectatorMode(false, player)
                         ProcessCamControls()
                         Done = false
                         PromptSetEnabled(prompt, 0)
                     else
+						NetworkSetInSpectatorMode(false, player)
                         ProcessCamControls()
                         Done = true
                         PromptSetEnabled(prompt, 1)
@@ -310,6 +273,7 @@ CreateThread(function()
                     carried = false
                 else -- if is being carried
                     if setDead then
+						NetworkSetInSpectatorMode(false, player)
                         PromptSetActiveGroupThisFrame(prompts, CheckLable())
                         PromptSetEnabled(prompt, 0)
                         ProcessCamControls()

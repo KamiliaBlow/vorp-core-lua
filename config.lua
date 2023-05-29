@@ -17,32 +17,32 @@ Config = {
     -- add here players initial money
     -- for items go to inventory
     initGold                 = 0.0,
-    initMoney                = 200.0,
+    initMoney                = 30.0,
     initRol                  = 0.0,
     initXp                   = 0,
-    initJob                  = "unemployed", -- leave it like this
+    initJob                  = "none", -- leave it like this
     initJobGrade             = 0,            -- leave it like this
     initGroup                = "user",       -- leave it like this
     Whitelist                = false,        -- dont use
     AllowWhitelistAutoUpdate = false,        -- dont use
-    SavePlayersStatus        = false,        -- save players health stamina inner and outter core to DB?
+    SavePlayersStatus        = true,        -- save players health stamina inner and outter core to DB?
     maxHealth                = 10,           -- 10 is FULL 0 IS EMPTY define max outer core for players
     maxStamina               = 10,           -- 10 is FULL 0 IS EMPTY define max outer core for players
     PVP                      = true,         -- Can players attack/hurt one another
-    PVPToggle                = true,         -- If true, players can set their own pvp state
+    PVPToggle                = false,         -- If true, players can set their own pvp state
     CommandOnOffPVP          = 'pvp',        -- [ NEED PVPToggle = true ] TOGGLE or OFF pvp for your character
     savePlayersTimer         = 10,           -- this will tell the core in how many minutes should all players be saved to the database
     showplayerIDwhenfocus    = true,         -- set false will show steam name when focus on another player RMB
     disableAutoAIM           = true,         -- if false players with controllers will have autoaim just like in rdr2
-    SavePlayersHours         = false,        -- if you want to save players played hours in DB, tx admin already have this
+    SavePlayersHours         = true,        -- if you want to save players played hours in DB, tx admin already have this
     --========================================
     ---MULTICHAR
     SaveSteamNameDB          = true,  -- TRUE if you want save steamname on character DB when player drop (need to update SQL)
     UseCharPermission        = false, -- | if false it will let players create maxchars bellow
-    MaxCharacters            = 5,     -- MAX ALLOWED TO BE CREATED [if UseCharPermission = true, SELECTED players(with command) can create MaxCharacters characters / if UseCharPermission = false, players can create MaxCharacters characters]
+    MaxCharacters            = 2,     -- MAX ALLOWED TO BE CREATED [if UseCharPermission = true, SELECTED players(with command) can create MaxCharacters characters / if UseCharPermission = false, players can create MaxCharacters characters]
     --========================================
     --UI CORES
-    HideOnlyDEADEYE          = true,
+    HideOnlyDEADEYE          = false,
     HidePlayersCore          = false,
     HideHorseCores           = false,
     --========================================
@@ -56,11 +56,11 @@ Config = {
     --=======================================
     ---UI Configurations
     HideUi                   = false,      -- Show or Hide the Overall UI
-    HideGold                 = false,      -- disables Gold UI for all
+    HideGold                 = true,      -- disables Gold UI for all
     HideMoney                = false,      -- disables Money UI for all
-    HideLevel                = false,      -- disables Level UI for all
+    HideLevel                = true,      -- disables Level UI for all
     HideID                   = false,      -- disables ID UI for all
-    HideTokens               = false,      -- disables Token UI for all
+    HideTokens               = true,      -- disables Token UI for all
     HidePVP                  = false,      -- disables PVP UI for all
     UIPosition               = 'TopRight', -- Changes position of UI. Options: BottomRight, MiddleRight, TopRight, TopMiddle, BottomMiddle
     UILayout                 = 'Column',   -- Changes the layour of the UI. Options: Row, Column
@@ -78,7 +78,7 @@ Config = {
     mapTypeOnFoot            = 3,     -- 0 = Off(no radar), 1 = Regular 2 = Expanded  3 = Simple(compass), for on foot
     mapTypeOnMount           = 3,     -- 0 = Off(no radar), 1 = Regular 2 = Expanded  3 = Simple(compass), for on horse
     enableTypeRadar          = false, -- if true the above will work, if false players can choose their radar type in the game settings.
-    Loadinscreen             = true,  -- ENABLE LOADING SCREENS on spawn and while spawn dead
+    Loadinscreen             = false,  -- ENABLE LOADING SCREENS on spawn and while spawn dead
     LoadinScreenTimer        = 10000, -- miliseconds
     --=======================================
     ---RESPAWN
@@ -87,7 +87,7 @@ Config = {
     RagdollOnResurrection    = true,                                 -- Enable or disable Ragdoll and revive effects when revived
     HealthRecharge           = { enable = true, multiplier = 0.37 }, -- enable or disable auto recharge of health outer core (real ped health), multiplier 1.0 is default
     StaminaRecharge          = { enable = true, multiplier = 0.4 },  -- enable or disable auto recharge of stamina outer core, multiplier 1.0 is default
-    RespawnTime              = 10,                                   -- seconds
+    RespawnTime              = 240,                                   -- seconds
     RespawnKey               = 0xDFF812F9,                           -- [E] KEY
     RespawnKeyTime           = 5000,                                 -- Milliseconds it will take to press the button
     CombatLogDeath           = true,                                 -- people who combat log now spawn in dead rather than force spawned
@@ -116,7 +116,7 @@ Config = {
             pos = vector4(1229.0, -1306.1, 76.9, 321.76),
         },
     },
-    ActiveEagleEye           = true,
+    ActiveEagleEye           = false,
     ActiveDeadEye            = false,
     --=======================================================
     -- BAN SYSTEM
@@ -130,7 +130,7 @@ Config = {
     SetBothDBadmin           = false, -- if set true should the command addGroup set admins on both tables in databse!
     --=======================================================
     ---BUILT IN RICH PRESENCE DISCORD
-    maxplayers               = 128,                       -- change to the number of players that can get in to your server
+    maxplayers               = 48,                       -- change to the number of players that can get in to your server
     appid                    = nil,                       -- Application ID (Replace this with you own)
     biglogo                  = "LOGOname",                -- image assets name for the "large" icon.
     biglogodesc              = " Redm Server Connect: ",  -- text when hover over image

@@ -87,15 +87,30 @@ CreateThread(function()
     end
 end)
 
+
+
 -- show players id when focus on other players
 CreateThread(function()
     while Config.showplayerIDwhenfocus do
         Wait(400)
-        for _, playersid in ipairs(GetActivePlayers()) do
-            local ped = GetPlayerPed(playersid)
-            SetPedPromptName(ped, T.message4 .. tostring(GetPlayerServerId(playersid)))
-        end
+		TriggerEvent("first_last")
     end
+end)
+
+RegisterNetEvent("first_last_tar") --items
+AddEventHandler("first_last_tar", function(name)
+	for _, playersid in ipairs(GetActivePlayers()) do
+            local ped = GetPlayerPed(playersid)
+				SetPedPromptName(ped, name.." : ".. tostring(GetPlayerServerId(playersid)))
+        end
+end)
+
+RegisterNetEvent("first_last") --items
+AddEventHandler("first_last", function()
+	for _, playersid in ipairs(GetActivePlayers()) do
+            local ped = GetPlayerPed(playersid)
+			TriggerServerEvent("vorp_rbm:first_last", GetPlayerServerId(playersid))
+        end
 end)
 
 -- hide or show players cores
