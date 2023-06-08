@@ -1,5 +1,6 @@
 local setDead = false
 local TimeToRespawn = 1
+local Dead = false
 local cam = nil
 local angleY = 0.0
 local angleZ = 0.0
@@ -10,6 +11,11 @@ local carried = false
 local Done = false
 
 local T = Translation[Lang].MessageOfSystem
+
+-- RegisterNetEvent('vorp:SelectedCharacter', function() --/ Change accordingly to your FW or do something else to initialize those funcs.
+    -- DeathCam2()
+    -- DeathCam1()
+-- end)
 
 --================================= FUNCTIONS ==========================================--
 
@@ -37,44 +43,58 @@ end
 local ProcessNewPosition = function()
     local mouseX = 0.0
     local mouseY = 0.0
+    
+    -- keyboard
     if (IsInputDisabled(0)) then
-        mouseX = GetDisabledControlNormal(1, 0x4D8FB4C1) * 1.5
-        mouseY = GetDisabledControlNormal(1, 0xFDA83190) * 1.5
+        -- rotation
+        mouseX = GetDisabledControlNormal(1, 0x6BC904FC) * 5.0
+        mouseY = GetDisabledControlNormal(1, 0x84574AE8) * 5.0
+        
+    -- controller
     else
-        mouseX = GetDisabledControlNormal(1, 0x4D8FB4C1) * 0.5
-        mouseY = GetDisabledControlNormal(1, 0xFDA83190) * 0.5
+        -- rotation
+        mouseX = GetDisabledControlNormal(1, 0x6BC904FC) * 0.5
+        mouseY = GetDisabledControlNormal(1, 0x84574AE8) * 0.5
     end
-    angleZ = angleZ - mouseX
-    angleY = angleY + mouseY
 
+    angleZ = angleZ - mouseX -- around Z axis (left / right)
+    angleY = angleY + mouseY -- up / down
+    -- limit up / down angle to 90°
     if (angleY > 89.0) then angleY = 89.0 elseif (angleY < -89.0) then angleY = -89.0 end
+    
     local pCoords = GetEntityCoords(PlayerPedId())
+    
     local behindCam = {
-        x = pCoords.x + ((Cos(angleZ) * Cos(angleY)) + (Cos(angleY) * Cos(angleZ))) / 2 * (3.0 + 0.5),
-        y = pCoords.y + ((Sin(angleZ) * Cos(angleY)) + (Cos(angleY) * Sin(angleZ))) / 2 * (3.0 + 0.5),
-        z = pCoords.z + ((Sin(angleY))) * (3.0 + 0.5)
+        x = pCoords.x + ((Cos(angleZ) * Cos(angleY)) + (Cos(angleY) * Cos(angleZ))) / 2 * (0.5 + 0.5),
+        y = pCoords.y + ((Sin(angleZ) * Cos(angleY)) + (Cos(angleY) * Sin(angleZ))) / 2 * (0.5 + 0.5),
+        z = pCoords.z + ((Sin(angleY))) * (0.5 + 0.5)
     }
-    local rayHandle = StartShapeTestRay(pCoords.x, pCoords.y, pCoords.z + 0.5, behindCam.x, behindCam.y, behindCam.z, -1
-    , PlayerPedId(), 0)
-    local hitBool, hitCoords = GetShapeTestResult(rayHandle)
-
-    local maxRadius = 3.0
-    if (hitBool and Vdist(pCoords.x, pCoords.y, pCoords.z + 0.5, hitCoords) < 3.0 + 0.5) then
-        maxRadius = Vdist(pCoords.x, pCoords.y, pCoords.z + 0.5, hitCoords)
+    local rayHandle = StartShapeTestRay(pCoords.x, pCoords.y, pCoords.z + 0.5, behindCam.x, behindCam.y, behindCam.z, -1, PlayerPedId(), 0)
+    local a, hitBool, hitCoords, surfaceNormal, entityHit = GetShapeTestResult(rayHandle)
+    
+    local maxRadius = 3.5
+    if (hitBool and Vdist(pCoords.x, pCoords.y, pCoords.z + 0.0, hitCoords) < 0.5 + 0.5) then
+        maxRadius = Vdist(pCoords.x, pCoords.y, pCoords.z + 0.0, hitCoords)
     end
-
+    
     local offset = {
         x = ((Cos(angleZ) * Cos(angleY)) + (Cos(angleY) * Cos(angleZ))) / 2 * maxRadius,
         y = ((Sin(angleZ) * Cos(angleY)) + (Cos(angleY) * Sin(angleZ))) / 2 * maxRadius,
         z = ((Sin(angleY))) * maxRadius
     }
-
+    
     local pos = {
         x = pCoords.x + offset.x,
         y = pCoords.y + offset.y,
         z = pCoords.z + offset.z
     }
-
+    
+    
+    -- Debug x,y,z axis
+    --DrawMarker(1, pCoords.x, pCoords.y, pCoords.z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.03, 5.0, 0, 0, 255, 255, false, false, 2, false, 0, false)
+    --DrawMarker(1, pCoords.x, pCoords.y, pCoords.z, 0.0, 0.0, 0.0, 0.0, 90.0, 0.0, 0.03, 0.03, 5.0, 255, 0, 0, 255, false, false, 2, false, 0, false)
+    --DrawMarker(1, pCoords.x, pCoords.y, pCoords.z, 0.0, 0.0, 0.0, -90.0, 0.0, 0.0, 0.03, 0.03, 5.0, 0, 255, 0, 255, false, false, 2, false, 0, false)
+    
     return pos
 end
 
@@ -83,7 +103,6 @@ local EndDeathCam = function()
     RenderScriptCams(false, false, 0, true, false)
     DestroyCam(cam, false)
     cam = nil
-    DestroyAllCams(true)
 end
 
 local keepdown
@@ -147,23 +166,48 @@ local StartDeathCam = function()
 end
 
 local ProcessCamControls = function()
-    local playerCoords
-    if Config.UseControlsCamera then
-        playerCoords = ProcessNewPosition()
-    else
-        playerCoords = GetEntityCoords(PlayerPedId())
-    end
+    local playerPed = PlayerPedId()
+    local playerCoords = GetEntityCoords(PlayerPedId())
+    -- disable 1st person as the 1st person camera can cause some glitches
+    Citizen.InvokeNative(0x05AB44D906738426)
+    
+    -- calculate new position
+    local newPos = ProcessNewPosition()
 
-    local newPos = playerCoords
-    if IsEntityAttachedToAnyPed(PlayerPedId()) then
-        SetCamCoord(cam, newPos.x, newPos.y + -2, newPos.z + 0.50)
-        SetCamRot(cam, playerCoords.x, playerCoords.y, playerCoords.z)
-        SetCamFov(cam, 50.0)
-    else
-        SetCamCoord(cam, newPos.x, newPos.y, newPos.z + 1.0)
-        SetCamRot(cam, playerCoords.x, playerCoords.y, playerCoords.z)
-        SetCamFov(cam, 50.0)
-    end
+    -- set coords of cam
+    Citizen.InvokeNative(0xF9EE7D419EE49DE6,cam, newPos.x, newPos.y, newPos.z)
+    
+    -- set rotation
+    Citizen.InvokeNative(0x948B39341C3A40C2,cam, playerCoords.x, playerCoords.y, playerCoords.z)
+end
+
+
+function DeathCam1()
+    Citizen.CreateThread(function()
+        while true do
+            Citizen.Wait(1)
+            
+            if (cam and Dead) then
+                ProcessCamControls()
+            end
+        end
+    end)
+end
+
+function DeathCam2()
+    Citizen.CreateThread(function()
+        while true do
+            local ped = PlayerPedId()
+            Citizen.Wait(500)
+            if not Dead and IsPedDeadOrDying(ped) then
+                Dead = true
+                StartDeathCam()
+            elseif Dead and not IsPedDeadOrDying(ped) then
+                Dead = false
+                EndDeathCam()
+            end
+        end
+    end)
 end
 
 -- CREATE PROMPT
@@ -240,7 +284,8 @@ CreateThread(function()
                 TimeToRespawn = Config.RespawnTime
                 CreateThread(function() -- asyncronous timer
                     RespawnTimer()
-                    StartDeathCam()
+					DeathCam1()
+                    DeathCam2()
                 end)
                 PressKey = false
                 setDead = true
@@ -260,20 +305,17 @@ CreateThread(function()
                     end
 
                     if TimeToRespawn >= 1 and setDead then -- message will only show if timer has not been met
-						NetworkSetInSpectatorMode(false, player)
-                        ProcessCamControls()
+						ProcessCamControls()
                         Done = false
                         PromptSetEnabled(prompt, 0)
                     else
-						NetworkSetInSpectatorMode(false, player)
-                        ProcessCamControls()
+						ProcessCamControls()
                         Done = true
                         PromptSetEnabled(prompt, 1)
                     end
                     carried = false
                 else -- if is being carried
                     if setDead then
-						NetworkSetInSpectatorMode(false, player)
                         PromptSetActiveGroupThisFrame(prompts, CheckLable())
                         PromptSetEnabled(prompt, 0)
                         ProcessCamControls()
