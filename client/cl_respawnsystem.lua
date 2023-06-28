@@ -12,10 +12,10 @@ local Done = false
 
 local T = Translation[Lang].MessageOfSystem
 
--- RegisterNetEvent('vorp:SelectedCharacter', function() --/ Change accordingly to your FW or do something else to initialize those funcs.
-    -- DeathCam2()
-    -- DeathCam1()
--- end)
+RegisterNetEvent('vorp:SelectedCharacter', function()
+    DeathCam2()
+    DeathCam1()
+end)
 
 --================================= FUNCTIONS ==========================================--
 
