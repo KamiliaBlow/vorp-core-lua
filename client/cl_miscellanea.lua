@@ -87,35 +87,71 @@ CreateThread(function()
     end
 end)
 
-
-
 -- show players id when focus on other players
 CreateThread(function()
-    while Config.showplayerIDwhenfocus do
-        Wait(400)
-		TriggerEvent("first_last")
+    while true do
+        Citizen.Wait(400)
+		local closestPlayer, closestDistance = GetClosestPlayer()
+		if closestPlayer ~= -1 and closestDistance < 15.0 then
+			print("ped: "..tostring(GetPlayerServerId(closestPlayer)))
+			TriggerServerEvent("vorp_rbm:first_last", GetPlayerServerId(closestPlayer), GetPlayerServerId(closestPlayer))			
+		end
     end
 end)
 
 RegisterNetEvent("first_last_tar") --items
-AddEventHandler("first_last_tar", function(name)
-	for _, playersid in ipairs(GetActivePlayers()) do
-            local ped = GetPlayerPed(playersid)
-				SetPedPromptName(ped, name.." : ".. tostring(GetPlayerServerId(playersid)))
-        end
+AddEventHandler("first_last_tar", function(name, id)
+	local closestPlayer, closestDistance = GetClosestPlayer()
+	local ped = GetPlayerPed(closestPlayer)
+	if closestPlayer ~= -1 and closestDistance < 5.0 then
+		--print("id: "..tostring(closestPlayer))
+		--print("name: "..tostring(name))
+		--print("ped: "..tostring(ped))
+		SetPedPromptName(ped, name.." : ".. tostring(GetPlayerServerId(closestPlayer)))
+	elseif closestPlayer ~= -1 and closestDistance < 15.0 and closestDistance > 5.5 then
+		if IsPedMale(ped) then
+			SetPedPromptName(ped, "Незнакомец : ".. tostring(GetPlayerServerId(closestPlayer)))
+			--print("Незнакомец: "..tostring(ped))
+		else
+			SetPedPromptName(ped, "Незнакомка : ".. tostring(GetPlayerServerId(closestPlayer)))
+			--print("Незнакомка: "..tostring(ped))
+		end
+	end
 end)
 
-RegisterNetEvent("first_last") --items
-AddEventHandler("first_last", function()
-	for _, playersid in ipairs(GetActivePlayers()) do
-            local ped = GetPlayerPed(playersid)
-			TriggerServerEvent("vorp_rbm:first_last", GetPlayerServerId(playersid))
+function GetClosestPlayer()
+    local players, closestDistance, closestPlayer = GetActivePlayers(), -1, -1
+    local playerPed, playerId = PlayerPedId(), PlayerId()
+    local coords, usePlayerPed = coords, false
+    
+    if coords then
+        coords = vector3(coords.x, coords.y, coords.z)
+    else
+        usePlayerPed = true
+        coords = GetEntityCoords(playerPed)
+    end
+    
+    for i=1, #players, 1 do
+        local tgt = GetPlayerPed(players[i])
+        if not usePlayerPed or (usePlayerPed and players[i] ~= playerId) then
+
+            local targetCoords = GetEntityCoords(tgt)
+            local distance = #(coords - targetCoords)
+
+            if closestDistance == -1 or closestDistance > distance then
+                if PlayerPedId() ~= GetPlayerPed(players[i]) then
+                    closestPlayer = players[i]
+                    closestDistance = distance
+                end
+            end
         end
-end)
+    end
+    return closestPlayer, closestDistance
+end
 
 -- hide or show players cores
 CreateThread(function()
-    Wait(5000)
+    Citizen.Wait(5000)
     if Config.HideOnlyDEADEYE then
         Citizen.InvokeNative(0xC116E6DF68DCE667, 2, 2)
         Citizen.InvokeNative(0xC116E6DF68DCE667, 3, 2)

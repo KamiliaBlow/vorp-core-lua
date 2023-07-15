@@ -5,7 +5,7 @@ end)
 ----------------------------------------GET NAME---------------------------------------------------
 
 RegisterServerEvent("vorp_rbm:first_last")
-AddEventHandler("vorp_rbm:first_last", function(target) 
+AddEventHandler("vorp_rbm:first_last", function(target, id) 
 	local _source = source
 	local User = VorpCore.getUser(target)
 	if User  == nil then
@@ -20,5 +20,7 @@ AddEventHandler("vorp_rbm:first_last", function(target)
 	end
 
 	Citizen.Wait(500)
-	TriggerClientEvent("first_last_tar", _source, first.." "..last)
+	--print("first last: "..tostring(first).." "..tostring(last))
+	--print("ID: "..tostring(id))
+	TriggerClientEvent("first_last_tar", _source, first.." "..last, id)
 end)
